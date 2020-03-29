@@ -78,51 +78,28 @@ class RouteM(Base):
 
     name = db.Column(db.String(128), nullable=False)
     status = db.Column(db.String(30), nullable=False)
-    path = db.relationship('RoutePointM', backref='route', lazy=True)
+    path_color = db.Column(db.String(30), nullable=False)
+    path = db.Column(db.Text, nullable=True)
     stops = db.relationship('RouteStopM', backref='route', lazy=True)
     checkpoints = db.relationship('RouteCheckpointM', backref='route', lazy=True)
-    json_path = db.Column(db.Text, nullable=True)
 
     fields = {
         'id': fields.Integer,
         'name': fields.String,
         'status': fields.String,
-        'path': fields.List(fields.Nested(RoutePointM.fields)),
+        'path_color': fields.String,
+        'path': PointFields,
         'stops': fields.List(fields.Nested(RouteStopM.fields)),
         'checkpoints': fields.List(fields.Nested(RouteCheckpointM.fields)),
-        'json_path': PointFields
     }
 
-    def __init__(self, name, status, path=None, stops=None, checkpoints=None, json_path=''):
+    def __init__(self, name, status, path_color='', path='', stops=None, checkpoints=None):
         self.name = name
         self.status = status
-        self.path = path if path else []
+        self.path_color = path_color
+        self.path = path
         self.stops = stops if stops else []
         self.checkpoints = checkpoints if checkpoints else []
-        self.json_path = json_path
     
     def __repr__(self):
         return f'<Route {self.name}>'
-
-
-# vehiculos y conductores
-
-class Vehicle(Base):
-    'Bus or vehicle model'
-    __tablename__ = 'api_vehicle'
-
-    plate = db.Column(db.String(30), nullable=False, unique=True)
-    model = db.Column(db.String(90), nullable=False)
-    year = db.Column(db.Integer, nullable=False)
-
-
-class Driver(Base):
-    'Bus driver model'
-    __tablename__ = 'api_driver'
-
-    name = db.Column(db.String(128), nullable=False)
-    las_name = db.Column(db.String(128), nullable=False)
-    status = db.Column(db.String(30), nullable=False)
-    ci = db.Column(db.String(11), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
-    category = db.Column(db.String(30), nullable=False)

@@ -35,13 +35,11 @@ class Route(Resource):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('name', type=str, help='name of the route')
         self.parser.add_argument('status', type=str, help='route status')
+        self.parser.add_argument('path_color', type=str, help='route path color')
         self.parser.add_argument('path', type=list, location='json')
         self.parser.add_argument('stops', type=list, location='json')
         self.parser.add_argument('checkpoints', type=list, location='json')
         
-        self.parser.add_argument('json_path', type=list, location='json')
-        # self.parser.add_argument('path', type=list, location='json')
-
     def get_or_abort(self, route_id):
         if route_id is None:
             abort(404, message='No route id')
@@ -75,12 +73,14 @@ class Route(Resource):
 
         route = RouteM(args['name'], args['status'])
         
+        if args['path_color']:
+            route.path_color = args['path_color']
+        if args['path']:
+            route.path = json.dumps(args['path'])
         if stops:
             route.stops = stops
         if checkpoints:
             route.checkpoints = checkpoints
-        if args['json_path']:
-            route.json_path = json.dumps(args['json_path'])
 
         db.session.add(route)
         db.session.commit()
@@ -104,14 +104,14 @@ class Route(Resource):
             route.name = args['name']
         if args['status']:
             route.status = args['status']
-        # if args['path']:
-        #     route.path = args['path']
+        if args['path_color']:
+            route.path_color = args['path_color']
+        if args['path']:
+            route.path = json.dumps(args['path'])
         if stops:
             route.stops = stops
         if checkpoints:
             route.checkpoints = checkpoints
-        if args['json_path']:
-            route.json_path = json.dumps(args['json_path'])
         
         db.session.commit()
         return route, 201

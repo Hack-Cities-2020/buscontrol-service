@@ -63,17 +63,25 @@ class Route(Resource):
     def post(self):
         LOGGER.info('CREATE Route')
         args = self.parser.parse_args()
-        stops = [RouteStopM(p['lat'], p['lng']) for p in args['stops']]
-        checkpoints = [RouteCheckpointM(p['lat'], p['lng']) for p in args['checkpoints']]
+        stops = []
+        checkpoints = []
+        if args['stops']: 
+            stops = [RouteStopM(p['lat'], p['lng']) for p in args['stops']]
+        if args['checkpoints']: 
+            checkpoints = [RouteCheckpointM(p['lat'], p['lng']) for p in args['checkpoints']]
+        
         for p in stops + checkpoints:
             db.session.add(p)
 
         route = RouteM(args['name'], args['status'])
-        route.stops = stops
-        route.checkpoints = checkpoints
         
-        json_path = json.dumps(args['json_path'])
-        route.json_path = json_path
+        if stops:
+            route.stops = stops
+        if checkpoints:
+            route.checkpoints = checkpoints
+        if args['json_path']:
+            route.json_path = json.dumps(args['json_path'])
+
         db.session.add(route)
         db.session.commit()
         # path = json.loads(args['path'])

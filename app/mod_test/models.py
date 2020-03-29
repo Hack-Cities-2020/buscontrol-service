@@ -1,8 +1,6 @@
-# Import the database object (db) from the main application module
-# We will define this inside /app/__init__.py in the next sections.
+from flask_restful import fields
 from app import db
 from app.models import Base
-from flask_restful import fields
 
 # Define a Animal model
 class AnimalM(Base):

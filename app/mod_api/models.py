@@ -11,7 +11,7 @@ json_path_fields = {
 
 class PointFields(fields.Raw):
     def format(self, value):
-        if value == 'null':
+        if value == 'null' or value is None or value == '':
             return []
         return json.loads(value)
 # punto georeferenciado
@@ -103,3 +103,26 @@ class RouteM(Base):
     
     def __repr__(self):
         return f'<Route {self.name}>'
+
+
+# vehiculos y conductores
+
+class Vehicle(Base):
+    'Bus or vehicle model'
+    __tablename__ = 'api_vehicle'
+
+    plate = db.Column(db.String(30), nullable=False, unique=True)
+    model = db.Column(db.String(90), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+
+
+class Driver(Base):
+    'Bus driver model'
+    __tablename__ = 'api_driver'
+
+    name = db.Column(db.String(128), nullable=False)
+    las_name = db.Column(db.String(128), nullable=False)
+    status = db.Column(db.String(30), nullable=False)
+    ci = db.Column(db.String(11), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
+    category = db.Column(db.String(30), nullable=False)

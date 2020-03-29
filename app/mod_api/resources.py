@@ -15,7 +15,7 @@ class Animal(Resource):
         if animal_id is None:
             return AnimalM.query.all()
 
-        return AnimalM.query.get(animal_id)
+        return AnimalM.query.get_or_404(animal_id)
 
     @marshal_with(AnimalM.fields)
     def post(self):

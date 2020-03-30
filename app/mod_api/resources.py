@@ -187,6 +187,8 @@ class Vehicle(Resource):
         # agregar vehicle a ruta
         try:
             route = RouteM.query.get(vehicle.route_id)
+            if route is None:
+                abort(404, message='route_id not found')
             LOGGER.debug(f'route: {route}')
             route.vehicles.append(vehicle)
             db.session.add(vehicle)
@@ -203,14 +205,25 @@ class Vehicle(Resource):
         vehicle = self.get_or_abort(vehicle_id)
 
         driver_dic = args['driver']
-        if driver_dic is not None:
-            if vehicle.driver.ci == driver_dic['ci']:
-                db.session.delete(vehicle.driver)
-
-            driver = DriverM(**driver_dic)
-            db.session.add(driver)
-            LOGGER.debug(f'driver: {driver}')
-            vehicle.driver = driver
+        LOGGER.debug(driver_dic)
+        if driver_dic is not None:  # si llega info de un driver
+            if vehicle.driver is not None: # si ya hay un driver
+                if vehicle.driver.id == driver_dic.get('id', None): # si es el mismo driver
+                    # existente
+                    vehicle.driver.full_name = driver_dic.get('full_name', vehicle.driver.full_name)
+                    vehicle.driver.ci = driver_dic.get('ci', vehicle.driver.ci)
+                else:
+                    if driver_dic.get('id', None) is not None:            
+                        db.session.delete(vehicle.driver)
+                    driver = DriverM(**driver_dic)
+                    db.session.add(driver)
+                    vehicle.driver = driver
+                    LOGGER.debug(f'updated driver: {driver}')
+            else:
+                driver = DriverM(**driver_dic)
+                db.session.add(driver)
+                vehicle.driver = driver
+                LOGGER.debug(f'new driver: {driver}')
 
         if args['model']:
             vehicle.model = args['model']

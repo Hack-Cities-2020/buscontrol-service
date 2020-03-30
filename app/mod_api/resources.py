@@ -179,6 +179,10 @@ class Vehicle(Resource):
             vehicle.route_id = args['route_id']
 
         db.session.add(vehicle)
+        # agregar vehicle a ruta
+        route = RouteM.query.get(vehicle.route_id)
+        route.vehicles.append(vehicle)
+        LOGGER.debug(f'route: {route}')
         try:
             db.session.commit()
         except sql_exception.IntegrityError as e:
@@ -187,7 +191,7 @@ class Vehicle(Resource):
         return vehicle, 201
 
     @marshal_with(VehicleM.fields)
-    def post(self):
+    def put(self):
         LOGGER.info('UPDATE Vehicle')
         args = self.parser_post.parse_args()
         driver_dic = args['driver']

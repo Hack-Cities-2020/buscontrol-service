@@ -91,8 +91,8 @@ class DriverM(Base):
 
     full_name = db.Column(db.String(128), nullable=False)
     ci = db.Column(db.String(11), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
-    category = db.Column(db.String(30), nullable=False)
+    age = db.Column(db.Integer, nullable=False, default=35)
+    category = db.Column(db.String(30), nullable=False, default='A')
     vehicle_id = db.Column(db.Integer, db.ForeignKey('api_vehicle.id'))
     driver_performance = db.relationship('DriverPerformanceM', backref='driver', lazy=True, uselist=False)
 

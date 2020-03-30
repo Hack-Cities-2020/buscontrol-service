@@ -247,3 +247,128 @@ class Vehicle(Resource):
         db.session.commit()
 
         return '', 204
+
+class RouteStops(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('stops', type=list, required=True, location='json' ,help='stops required')
+
+    def get_route_or_abort(self, route_id):
+        if route_id is None:
+            abort(404, message='No route id')
+            return
+        
+        route = RouteM.query.get(route_id)
+        if route is None:
+            abort(404, message=f'route for id:{route_id} doesn\'t exist')
+        
+        return route
+
+    def get_or_abort(self, stop_id):
+        if stop_id is None:
+            abort(404, message='No stop id')
+            return
+        
+        stop = RouteStopM.query.get(stop_id)
+        if stop is None:
+            abort(404, message=f'Stop for id:{stop_id} doesn\'t exist')
+        
+        return stop
+
+    
+    @marshal_with(VehicleM.fields)
+    def get(self, route_id=None, stop_id=None):
+        if route_id is None:
+            return VehicleM.query.all()
+
+        return self.get_or_abort(route_id)
+    
+    @marshal_with(VehicleM.fields)
+    def post(self):
+        LOGGER.info('CREATE Vehicle')
+        args = self.parser_post.parse_args()
+        vehicle = VehicleM(args['plate'])
+        LOGGER.debug(f'vehicle: {vehicle}')
+
+        driver_dic = args['driver']
+        if driver_dic is not None:
+            driver = DriverM(**driver_dic)
+            db.session.add(driver)
+            LOGGER.debug(f'driver: {driver}')
+
+            vehicle.driver = driver
+
+        if args['model']:
+            vehicle.model = args['model']
+        if args['year']:
+            vehicle.year = args['year']
+        if args['manufacturer']:
+            vehicle.manufacturer = args['manufacturer']
+        if args['capacity']:
+            vehicle.capacity = args['capacity']
+        if args['route_id']:
+            vehicle.route_id = args['route_id']
+
+        # agregar vehicle a ruta
+        try:
+            route = RouteM.query.get(vehicle.route_id)
+            if route is None:
+                abort(404, message='route_id not found')
+            LOGGER.debug(f'route: {route}')
+            route.vehicles.append(vehicle)
+            db.session.add(vehicle)
+            db.session.commit()
+        except sql_exception.IntegrityError as e:
+            abort(403, message='duplicate plates not allowed')
+        # path = json.loads(args['path'])
+        return vehicle, 201
+
+    @marshal_with(VehicleM.fields)
+    def put(self, route_id):
+        LOGGER.info('UPDATE Vehicle')
+        args = self.parser.parse_args()
+        vehicle = self.get_or_abort(route_id)
+
+        driver_dic = args['driver']
+        LOGGER.debug(driver_dic)
+        if driver_dic is not None:  # si llega info de un driver
+            if vehicle.driver is not None: # si ya hay un driver
+                if vehicle.driver.id == driver_dic.get('id', None): # si es el mismo driver
+                    # existente
+                    vehicle.driver.full_name = driver_dic.get('full_name', vehicle.driver.full_name)
+                    vehicle.driver.ci = driver_dic.get('ci', vehicle.driver.ci)
+                else:
+                    if driver_dic.get('id', None) is not None:            
+                        db.session.delete(vehicle.driver)
+                    driver = DriverM(**driver_dic)
+                    db.session.add(driver)
+                    vehicle.driver = driver
+                    LOGGER.debug(f'updated driver: {driver}')
+            else:
+                driver = DriverM(**driver_dic)
+                db.session.add(driver)
+                vehicle.driver = driver
+                LOGGER.debug(f'new driver: {driver}')
+
+        if args['model']:
+            vehicle.model = args['model']
+        if args['year']:
+            vehicle.year = args['year']
+        if args['manufacturer']:
+            vehicle.manufacturer = args['manufacturer']
+        if args['capacity']:
+            vehicle.capacity = args['capacity']
+        if args.get('route_id', None):
+            vehicle.route_id = args['route_id']
+
+        db.session.add(vehicle)
+        db.session.commit()
+        return vehicle, 201
+
+    def delete(self, route_id):
+        LOGGER.info('DELETE vehicle')
+        vehicle = self.get_or_abort(route_id)
+        db.session.delete(vehicle)
+        db.session.commit()
+
+        return '', 204

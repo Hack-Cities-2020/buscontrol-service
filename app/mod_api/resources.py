@@ -163,7 +163,8 @@ class Vehicle(Resource):
         LOGGER.info('CREATE Vehicle')
         args = self.parser_post.parse_args()
         vehicle = VehicleM(args['plate'])
-        
+        LOGGER.debug(f'vehicle: {vehicle}')
+
         driver_dic = args['driver']
         if driver_dic is not None:
             driver = DriverM(**driver_dic)
@@ -171,7 +172,7 @@ class Vehicle(Resource):
             LOGGER.debug(f'driver: {driver}')
 
             vehicle.driver = driver
-            
+
         if args['model']:
             vehicle.model = args['model']
         if args['year']:
@@ -183,12 +184,12 @@ class Vehicle(Resource):
         if args['route_id']:
             vehicle.route_id = args['route_id']
 
-        db.session.add(vehicle)
         # agregar vehicle a ruta
-        route = RouteM.query.get(vehicle.route_id)
-        route.vehicles.append(vehicle)
-        LOGGER.debug(f'route: {route}')
         try:
+            route = RouteM.query.get(vehicle.route_id)
+            LOGGER.debug(f'route: {route}')
+            route.vehicles.append(vehicle)
+            db.session.add(vehicle)
             db.session.commit()
         except sql_exception.IntegrityError as e:
             abort(403, message='duplicate plates not allowed')
@@ -196,16 +197,21 @@ class Vehicle(Resource):
         return vehicle, 201
 
     @marshal_with(VehicleM.fields)
-    def put(self):
+    def put(self, vehicle_id):
         LOGGER.info('UPDATE Vehicle')
-        args = self.parser_post.parse_args()
-        driver_dic = args['driver']
-        driver = DriverM(**driver_dic)
-        db.session.add(driver)
-        LOGGER.debug(f'driver: {driver}')
+        args = self.parser.parse_args()
+        vehicle = self.get_or_abort(vehicle_id)
 
-        vehicle = VehicleM(args['plate'])
-        vehicle.driver = driver
+        driver_dic = args['driver']
+        if driver_dic is not None:
+            if vehicle.driver.ci == driver_dic['ci']:
+                db.session.delete(vehicle.driver)
+
+            driver = DriverM(**driver_dic)
+            db.session.add(driver)
+            LOGGER.debug(f'driver: {driver}')
+            vehicle.driver = driver
+
         if args['model']:
             vehicle.model = args['model']
         if args['year']:
@@ -214,7 +220,7 @@ class Vehicle(Resource):
             vehicle.manufacturer = args['manufacturer']
         if args['capacity']:
             vehicle.capacity = args['capacity']
-        if args['route_id']:
+        if args.get('route_id', None):
             vehicle.route_id = args['route_id']
 
         db.session.add(vehicle)

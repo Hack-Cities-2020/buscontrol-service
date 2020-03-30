@@ -121,6 +121,7 @@ class VehicleM(Base):
         'id': fields.Integer,
         'plate': fields.String,
         'model': fields.String,
+        'capacity': fields.Integer,
         'manufacturer': fields.String,
         'driver': fields.Nested(DriverM.fields),
         'route_id': fields.Integer

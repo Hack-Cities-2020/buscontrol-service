@@ -1,8 +1,11 @@
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 # Define the WSGI application object
 app = Flask(__name__)
+# CORS
+CORS(app)
 # Configurations
 app.config.from_object('config')
 

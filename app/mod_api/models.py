@@ -73,26 +73,34 @@ class RouteCheckpointM(Point):
         return f'<Route Checkpoint {self.id}:({self.latitude}, {self.longitude})>'
 
 # vehiculos y conductores
+class DriverPerformanceM(Base):
+    'Bus driver performance metrics model'
+    __tablename__ = 'api_driver_performance'
+    rating = db.Column(db.Integer)
+    timing = db.Column(db.Integer)
+    experience = db.Column(db.Integer)
+
+    driver_id = db.Column(db.Integer, db.ForeignKey('api_driver.id'))
+
+    def __repr__(self):
+        return f'<Driver performance {self.driver_id}>'
+
 class DriverM(Base):
     'Bus driver model'
     __tablename__ = 'api_driver'
 
-    name = db.Column(db.String(128), nullable=False)
-    last_name = db.Column(db.String(128), nullable=False)
-    status = db.Column(db.String(30), nullable=False)
+    full_name = db.Column(db.String(128), nullable=False)
     ci = db.Column(db.String(11), nullable=False)
     age = db.Column(db.Integer, nullable=False)
     category = db.Column(db.String(30), nullable=False)
     vehicle_id = db.Column(db.Integer, db.ForeignKey('api_vehicle.id'))
+    driver_performance = db.relationship('DriverPerformanceM', backref='driver', lazy=True, uselist=False)
 
     fields = {
         'id': fields.String,
-        'last_name': fields.String,
+        'full_name': fields.String,
         'ci': fields.String
     }
-
-    def __init__(self, ci):
-        self.ci = ci
 
     def __repr__(self):
         return f'<Driver {self.ci}>'
@@ -123,8 +131,6 @@ class VehicleM(Base):
 
     def __repr__(self):
         return f'<Vehicle {self.plate}>'
-
-
 
 
 # Rutas

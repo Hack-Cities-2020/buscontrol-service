@@ -126,15 +126,15 @@ class Route(Resource):
         return '', 204
 
 
-
 class Vehicle(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('plate', type=str, help='vehicle identification plate')
+        self.parser.add_argument('plate', type=str, help='vehicle plate is required')
         self.parser.add_argument('model', type=str, help='model of the vehicle')
         self.parser.add_argument('year', type=int, help='year of the vehicle')
         self.parser.add_argument('manufacturer', type=str, help='manufacturer of the vehicle')
         self.parser.add_argument('capacity', type=str, help='capacity of the vehicle')        
+        self.parser.add_argument('driver', type=dict, help='driver information missing!')
         self.parser_post = self.parser.copy()
         self.parser_post.add_argument('route_id', required=True,type=int, help='route_id is required!')
 
@@ -160,9 +160,13 @@ class Vehicle(Resource):
     def post(self):
         LOGGER.info('CREATE Vehicle')
         args = self.parser_post.parse_args()
-        
+        driver_dic = args['driver']
+        driver = DriverM(**driver_dic)
+        db.session.add(driver)
+        LOGGER.debug(f'driver: {driver}')
+
         vehicle = VehicleM(args['plate'])
-        
+        vehicle.driver = driver
         if args['model']:
             vehicle.model = args['model']
         if args['year']:
@@ -181,3 +185,37 @@ class Vehicle(Resource):
             abort(403, message='duplicate plates not allowed')
         # path = json.loads(args['path'])
         return vehicle, 201
+
+    @marshal_with(VehicleM.fields)
+    def post(self):
+        LOGGER.info('UPDATE Vehicle')
+        args = self.parser_post.parse_args()
+        driver_dic = args['driver']
+        driver = DriverM(**driver_dic)
+        db.session.add(driver)
+        LOGGER.debug(f'driver: {driver}')
+
+        vehicle = VehicleM(args['plate'])
+        vehicle.driver = driver
+        if args['model']:
+            vehicle.model = args['model']
+        if args['year']:
+            vehicle.year = args['year']
+        if args['manufacturer']:
+            vehicle.manufacturer = args['manufacturer']
+        if args['capacity']:
+            vehicle.capacity = args['capacity']
+        if args['route_id']:
+            vehicle.route_id = args['route_id']
+
+        db.session.add(vehicle)
+        db.session.commit()
+        return vehicle, 201
+
+    def delete(self, vehicle_id):
+        LOGGER.info('DELETE vehicle')
+        vehicle = self.get_or_abort(vehicle_id)
+        db.session.delete(vehicle)
+        db.session.commit()
+
+        return '', 204

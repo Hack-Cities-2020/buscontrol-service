@@ -1,5 +1,6 @@
 import json
 from flask_restful import Resource, reqparse, marshal_with, abort
+import sqlalchemy.exc as sql_exception
 from app import db
 from app import LOGGER
 from app.mod_api.models import *
@@ -126,3 +127,57 @@ class Route(Resource):
 
 
 
+class Vehicle(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('plate', type=str, help='vehicle identification plate')
+        self.parser.add_argument('model', type=str, help='model of the vehicle')
+        self.parser.add_argument('year', type=int, help='year of the vehicle')
+        self.parser.add_argument('manufacturer', type=str, help='manufacturer of the vehicle')
+        self.parser.add_argument('capacity', type=str, help='capacity of the vehicle')        
+        self.parser_post = self.parser.copy()
+        self.parser_post.add_argument('route_id', required=True,type=int, help='route_id is required!')
+
+    def get_or_abort(self, vehicle_id):
+        if vehicle_id is None:
+            abort(404, message='No vehicle id')
+            return
+        
+        vehicle = VehicleM.query.get(vehicle_id)
+        if vehicle is None:
+            abort(404, message=f'Vehicle for id:{vehicle_id} doesn\'t exist')
+        
+        return vehicle
+
+    @marshal_with(VehicleM.fields)
+    def get(self, vehicle_id=None):
+        if vehicle_id is None:
+            return VehicleM.query.all()
+
+        return self.get_or_abort(vehicle_id)
+    
+    @marshal_with(VehicleM.fields)
+    def post(self):
+        LOGGER.info('CREATE Vehicle')
+        args = self.parser_post.parse_args()
+        
+        vehicle = VehicleM(args['plate'])
+        
+        if args['model']:
+            vehicle.model = args['model']
+        if args['year']:
+            vehicle.year = args['year']
+        if args['manufacturer']:
+            vehicle.manufacturer = args['manufacturer']
+        if args['capacity']:
+            vehicle.capacity = args['capacity']
+        if args['route_id']:
+            vehicle.route_id = args['route_id']
+
+        db.session.add(vehicle)
+        try:
+            db.session.commit()
+        except sql_exception.IntegrityError as e:
+            abort(403, message='duplicate plates not allowed')
+        # path = json.loads(args['path'])
+        return vehicle, 201

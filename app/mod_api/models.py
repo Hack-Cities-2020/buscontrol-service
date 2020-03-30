@@ -71,6 +71,62 @@ class RouteCheckpointM(Point):
 
     def __repr__(self):
         return f'<Route Checkpoint {self.id}:({self.latitude}, {self.longitude})>'
+
+# vehiculos y conductores
+class DriverM(Base):
+    'Bus driver model'
+    __tablename__ = 'api_driver'
+
+    name = db.Column(db.String(128), nullable=False)
+    last_name = db.Column(db.String(128), nullable=False)
+    status = db.Column(db.String(30), nullable=False)
+    ci = db.Column(db.String(11), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
+    category = db.Column(db.String(30), nullable=False)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('api_vehicle.id'))
+
+    fields = {
+        'id': fields.String,
+        'last_name': fields.String,
+        'ci': fields.String
+    }
+
+    def __init__(self, ci):
+        self.ci = ci
+
+    def __repr__(self):
+        return f'<Driver {self.ci}>'
+
+class VehicleM(Base):
+    'Bus or vehicle model'
+    __tablename__ = 'api_vehicle'
+
+    plate = db.Column(db.String(30), nullable=False, unique=True)
+    model = db.Column(db.String(90), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    manufacturer = db.Column(db.String(90), nullable=True)
+    capacity = db.Column(db.Integer, nullable=False)
+    driver = db.relationship('DriverM', backref='vehicle', lazy=True, uselist=False)
+    route_id = db.Column(db.Integer, db.ForeignKey('api_route.id'))
+
+    fields = {
+        'id': fields.Integer,
+        'plate': fields.String,
+        'model': fields.String,
+        'manufacturer': fields.String,
+        'driver': fields.Nested(DriverM.fields),
+        'route_id': fields.Integer
+    }
+
+    def __init__(self, plate):
+        self.plate = plate
+
+    def __repr__(self):
+        return f'<Vehicle {self.plate}>'
+
+
+
+
 # Rutas
 class RouteM(Base):
     'Route model'
@@ -82,6 +138,7 @@ class RouteM(Base):
     path = db.Column(db.Text, nullable=True)
     stops = db.relationship('RouteStopM', backref='route', lazy=True)
     checkpoints = db.relationship('RouteCheckpointM', backref='route', lazy=True)
+    vehicles = db.relationship('VehicleM', backref='route', lazy=True)
 
     fields = {
         'id': fields.Integer,
@@ -91,6 +148,7 @@ class RouteM(Base):
         'path': PointFields,
         'stops': fields.List(fields.Nested(RouteStopM.fields)),
         'checkpoints': fields.List(fields.Nested(RouteCheckpointM.fields)),
+        'vehicles': fields.List(fields.Nested(VehicleM.fields))
     }
 
     def __init__(self, name, status, path_color='', path='', stops=None, checkpoints=None):
@@ -103,3 +161,4 @@ class RouteM(Base):
     
     def __repr__(self):
         return f'<Route {self.name}>'
+

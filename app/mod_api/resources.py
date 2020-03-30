@@ -94,8 +94,10 @@ class Route(Resource):
         args = self.parser.parse_args()
         stops = []
         checkpoints = []
+        
         if args['stops']: 
             stops = [RouteStopM(p['lat'], p['lng']) for p in args['stops']]
+
         if args['checkpoints']: 
             checkpoints = [RouteCheckpointM(p['lat'], p['lng']) for p in args['checkpoints']]
         
@@ -160,13 +162,16 @@ class Vehicle(Resource):
     def post(self):
         LOGGER.info('CREATE Vehicle')
         args = self.parser_post.parse_args()
-        driver_dic = args['driver']
-        driver = DriverM(**driver_dic)
-        db.session.add(driver)
-        LOGGER.debug(f'driver: {driver}')
-
         vehicle = VehicleM(args['plate'])
-        vehicle.driver = driver
+        
+        driver_dic = args['driver']
+        if driver_dic is not None:
+            driver = DriverM(**driver_dic)
+            db.session.add(driver)
+            LOGGER.debug(f'driver: {driver}')
+
+            vehicle.driver = driver
+            
         if args['model']:
             vehicle.model = args['model']
         if args['year']:

@@ -1,5 +1,13 @@
 # Hackfellas bus control system
+Dentro de la  Categoría: **Movilidad Urbana**. Escogimos resolver  el reto de [Control de puntos intermedios](http://www.hackcities.com/project/1/), ya que vimos que es importante que se  aproveche herramientas tecnológicas  sencillas a favor de una buena gestión y control del área de transporte, con esto aportamos para dar ese pequeño paso a que nos podamos convertir en una ciudad inteligente , beneficiando a todos los ciudadanos.
 
+Este proyecto brinda un sistema integrado de control, monitoreo y gestión del recorrido de vehículos de transporte urbano con funcionalidades avanzadas de estimación de tiempos de llegada y generación de reportes para fines administrativos y de auditoria. 
+
+El proyecto se compone de 3 partes principales:
+
+- App Movil para el seguimiento y control de vehículos: [Repo](https://github.com/Hack-Cities-2020/mobility_project_mobile_2020)
+- Servicio API REST de gestión de rutas, recorridos y vehículos (Este Repo).
+- Aplicación Web de monitoreo y gestión de rutas, recorridos y vehículos: [Repo](https://github.com/Hack-Cities-2020/mobility_project_front_2020)
 
 ## Repo: buscontrol-service
 Servicio para tareas de control de itinerarios y rutas de buses de transporte urbano.

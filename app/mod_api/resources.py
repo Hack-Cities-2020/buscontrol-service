@@ -481,7 +481,7 @@ class Reports(Resource):
         print(file_path)
         return file_name
 
-    def get(self):
+    def post(self):
         'generate report as csv file and return url for file'
         args = self.parser.parse_args()
         print(f'host {request.host_url}')

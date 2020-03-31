@@ -16,5 +16,5 @@ class Base(db.Model):
 class Point(Base):
     __abstract__ = True
 
-    latitude = db.Column(db.Float(), nullable=False)
-    longitude = db.Column(db.Float(), nullable=False)
+    lat = db.Column(db.Float(), nullable=False)
+    lng = db.Column(db.Float(), nullable=False)

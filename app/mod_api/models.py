@@ -21,38 +21,30 @@ class RoutePointM(Point):
     route_id = db.Column(db.Integer, db.ForeignKey('api_route.id'))
 
     fields = {
-        'lat': fields.Float(attribute='latitude'),
-        'lng': fields.Float(attribute='longitude')
+        'lat': fields.Float,
+        'lng': fields.Float
     }
     
-    def __init__(self, lat, long):
-        self.latitude = lat
-        self.longitude = long
 
     def __repr__(self):
-        return f'<Route Point ({self.latitude}, {self.longitude})>'
+        return f'<Route Point ({self.lat}, {self.lng})>'
 
 # punto georeferenciado
 class RouteStopM(Point):
     'Bus stop'
     __tablename__ = 'api_route_stop'
-    name = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), nullable=False, default='default stop')
     route_id = db.Column(db.Integer, db.ForeignKey('api_route.id'))
 
     fields = {
         'id': fields.Integer,
-        'lat': fields.Float(attribute='latitude'),
-        'lng': fields.Float(attribute='longitude'),
+        'lat': fields.Float,
+        'lng': fields.Float,
         'name': fields.String
     }
 
-    def __init__(self, lat, long, name='default stop'):
-        self.latitude = lat
-        self.longitude = long
-        self.name = name
-
     def __repr__(self):
-        return f'<Route Stop {self.name}:({self.latitude}, {self.longitude})>'
+        return f'<Route Stop {self.name}:({self.lat}, {self.lng})>'
 
 class RouteCheckpointM(Point):
     'Bus stop'
@@ -61,16 +53,12 @@ class RouteCheckpointM(Point):
 
     fields = {
         'id': fields.Integer,
-        'lat': fields.Float(attribute='latitude'),
-        'lng': fields.Float(attribute='longitude')
+        'lat': fields.Float,
+        'lng': fields.Float
     }
-    
-    def __init__(self, lat, long):
-        self.latitude = lat
-        self.longitude = long
 
     def __repr__(self):
-        return f'<Route Checkpoint {self.id}:({self.latitude}, {self.longitude})>'
+        return f'<Route Checkpoint {self.id}:({self.lat}, {self.lng})>'
 
 # vehiculos y conductores
 class DriverPerformanceM(Base):

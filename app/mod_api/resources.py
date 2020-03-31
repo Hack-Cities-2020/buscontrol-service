@@ -65,9 +65,9 @@ class Route(Resource):
         stops = []
         checkpoints = []
         if args['stops']: 
-            stops = [RouteStopM(p['lat'], p['lng']) for p in args['stops']]
+            stops = [RouteStopM(**p) for p in args['stops']]
         if args['checkpoints']: 
-            checkpoints = [RouteCheckpointM(p['lat'], p['lng']) for p in args['checkpoints']]
+            checkpoints = [RouteCheckpointM(**p) for p in args['checkpoints']]
         
         for p in stops + checkpoints:
             db.session.add(p)
@@ -117,7 +117,7 @@ class Route(Resource):
             route.checkpoints = checkpoints
         
         db.session.commit()
-        return route, 201
+        return route, 200
     
     def delete(self, route_id):
         LOGGER.info('DELETE route')
@@ -252,6 +252,11 @@ class RouteStops(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('stops', type=list, required=True, location='json' ,help='stops required')
+        self.parser_put = reqparse.RequestParser()
+        self.parser_put.add_argument('lat', type=float, required=True, help='latitude required!')
+        self.parser_put.add_argument('lng', type=float, required=True, help='longitude required!')
+        self.parser_put.add_argument('name', type=str, required=True, help='name required!')
+        
 
     def get_route_or_abort(self, route_id):
         if route_id is None:
@@ -271,104 +276,162 @@ class RouteStops(Resource):
         
         stop = RouteStopM.query.get(stop_id)
         if stop is None:
-            abort(404, message=f'Stop for id:{stop_id} doesn\'t exist')
+            abort(404, message=f'stops for id:{stop_id} doesn\'t exist')
         
         return stop
 
     
-    @marshal_with(VehicleM.fields)
+    @marshal_with(RouteStopM.fields)
     def get(self, route_id=None, stop_id=None):
-        if route_id is None:
-            return VehicleM.query.all()
-
-        return self.get_or_abort(route_id)
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'GET stops for {route}')
+        if stop_id is None:
+            return route.stops
+        return self.get_or_abort(stop_id)
     
-    @marshal_with(VehicleM.fields)
-    def post(self):
-        LOGGER.info('CREATE Vehicle')
-        args = self.parser_post.parse_args()
-        vehicle = VehicleM(args['plate'])
-        LOGGER.debug(f'vehicle: {vehicle}')
-
-        driver_dic = args['driver']
-        if driver_dic is not None:
-            driver = DriverM(**driver_dic)
-            db.session.add(driver)
-            LOGGER.debug(f'driver: {driver}')
-
-            vehicle.driver = driver
-
-        if args['model']:
-            vehicle.model = args['model']
-        if args['year']:
-            vehicle.year = args['year']
-        if args['manufacturer']:
-            vehicle.manufacturer = args['manufacturer']
-        if args['capacity']:
-            vehicle.capacity = args['capacity']
-        if args['route_id']:
-            vehicle.route_id = args['route_id']
-
-        # agregar vehicle a ruta
-        try:
-            route = RouteM.query.get(vehicle.route_id)
-            if route is None:
-                abort(404, message='route_id not found')
-            LOGGER.debug(f'route: {route}')
-            route.vehicles.append(vehicle)
-            db.session.add(vehicle)
-            db.session.commit()
-        except sql_exception.IntegrityError as e:
-            abort(403, message='duplicate plates not allowed')
-        # path = json.loads(args['path'])
-        return vehicle, 201
-
-    @marshal_with(VehicleM.fields)
-    def put(self, route_id):
-        LOGGER.info('UPDATE Vehicle')
+    @marshal_with(RouteStopM.fields)
+    def post(self, route_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'CREATE Stops for {route}')
         args = self.parser.parse_args()
-        vehicle = self.get_or_abort(route_id)
-
-        driver_dic = args['driver']
-        LOGGER.debug(driver_dic)
-        if driver_dic is not None:  # si llega info de un driver
-            if vehicle.driver is not None: # si ya hay un driver
-                if vehicle.driver.id == driver_dic.get('id', None): # si es el mismo driver
-                    # existente
-                    vehicle.driver.full_name = driver_dic.get('full_name', vehicle.driver.full_name)
-                    vehicle.driver.ci = driver_dic.get('ci', vehicle.driver.ci)
-                else:
-                    if driver_dic.get('id', None) is not None:            
-                        db.session.delete(vehicle.driver)
-                    driver = DriverM(**driver_dic)
-                    db.session.add(driver)
-                    vehicle.driver = driver
-                    LOGGER.debug(f'updated driver: {driver}')
-            else:
-                driver = DriverM(**driver_dic)
-                db.session.add(driver)
-                vehicle.driver = driver
-                LOGGER.debug(f'new driver: {driver}')
-
-        if args['model']:
-            vehicle.model = args['model']
-        if args['year']:
-            vehicle.year = args['year']
-        if args['manufacturer']:
-            vehicle.manufacturer = args['manufacturer']
-        if args['capacity']:
-            vehicle.capacity = args['capacity']
-        if args.get('route_id', None):
-            vehicle.route_id = args['route_id']
-
-        db.session.add(vehicle)
+        stops_list = args['stops']
+        LOGGER.debug(f'stops: {stops_list}')
+        stops = []
+        if args['stops']: 
+            stops = [RouteStopM(**p) for p in args['stops']]
+        
+        LOGGER.debug(f'New stops: {stops}')
+        route.stops = stops
         db.session.commit()
-        return vehicle, 201
+        return stops, 201
 
-    def delete(self, route_id):
-        LOGGER.info('DELETE vehicle')
-        vehicle = self.get_or_abort(route_id)
-        db.session.delete(vehicle)
+    @marshal_with(RouteStopM.fields)
+    def put(self, route_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'ADD Stops to {route}')
+        args = self.parser_put.parse_args()
+        stop = RouteStopM(**args)
+        LOGGER.debug(f'stop: {stop}')
+        
+        route.stops.append(stop)
+        db.session.commit()
+        return stop, 201
+
+    @marshal_with(RouteStopM.fields)
+    def patch(self, route_id=None, stop_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'UPDATE stop of {route}')
+        args = self.parser_put.parse_args()
+        stop = self.get_or_abort(stop_id)
+
+        LOGGER.debug(f'stop: {stop}')
+        stop.lat = args.get('lat', stop.lat)
+        stop.lng = args.get('lng', stop.lng)
+        stop.name = args.get('name', stop.name)
+        
+        db.session.commit()
+        return stop, 200
+
+    def delete(self, route_id, stop_id):
+        LOGGER.info('DELETE stop')
+        route = self.get_route_or_abort(route_id)
+        stop = self.get_or_abort(stop_id)
+
+        db.session.delete(stop)
+        db.session.commit()
+
+        return '', 204
+
+
+
+class RouteCheckpoints(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('checkpoints', type=list, required=True, location='json' ,help='checkpoints required')
+        self.parser_put = reqparse.RequestParser()
+        self.parser_put.add_argument('lat', type=float, required=True, help='latitude required!')
+        self.parser_put.add_argument('lng', type=float, required=True, help='longitude required!')
+        
+
+    def get_route_or_abort(self, route_id):
+        if route_id is None:
+            abort(404, message='No route id')
+            return
+        
+        route = RouteM.query.get(route_id)
+        if route is None:
+            abort(404, message=f'route for id:{route_id} doesn\'t exist')
+        
+        return route
+
+    def get_or_abort(self, checkpoint_id):
+        if checkpoint_id is None:
+            abort(404, message='No stop id')
+            return
+        
+        checkpoint = RouteCheckpointM.query.get(checkpoint_id)
+        if checkpoint is None:
+            abort(404, message=f'checkpoints for id:{checkpoint_id} doesn\'t exist')
+        
+        return checkpoint
+
+    
+    @marshal_with(RouteCheckpointM.fields)
+    def get(self, route_id=None, checkpoint_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'GET checkpoints for {route}')
+        if checkpoint_id is None:
+            return route.checkpoints
+        return self.get_or_abort(checkpoint_id)
+    
+    @marshal_with(RouteCheckpointM.fields)
+    def post(self, route_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'CREATE checkpoints for {route}')
+        args = self.parser.parse_args()
+        checkpoints_list = args['checkpoints']
+        LOGGER.debug(f'checkpoints: {checkpoints_list}')
+        checkpoints = []
+        if args['checkpoints']: 
+            checkpoints = [RouteCheckpointM(**p) for p in args['checkpoints']]
+        
+        LOGGER.debug(f'New checkpoints: {checkpoints}')
+        route.checkpoints = checkpoints
+        db.session.commit()
+        return checkpoints, 201
+
+    @marshal_with(RouteCheckpointM.fields)
+    def put(self, route_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'ADD checkpoints to {route}')
+        args = self.parser_put.parse_args()
+        checkpoint = RouteCheckpointM(**args)
+        LOGGER.debug(f'checkpoint: {checkpoint}')
+        
+        route.checkpoints.append(checkpoint)
+        db.session.commit()
+        return checkpoint, 201
+
+    @marshal_with(RouteCheckpointM.fields)
+    def patch(self, route_id=None, checkpoint_id=None):
+        route = self.get_route_or_abort(route_id)
+        LOGGER.info(f'UPDATE checkpoint of {route}')
+        args = self.parser_put.parse_args()
+        checkpoint = self.get_or_abort(checkpoint_id)
+
+        LOGGER.debug(f'checkpoint: {checkpoint}')
+        checkpoint.lat = args.get('lat', checkpoint.lat)
+        checkpoint.lng = args.get('lng', checkpoint.lng)
+        
+        db.session.commit()
+        return checkpoint, 200
+
+    def delete(self, route_id, checkpoint_id):
+        LOGGER.info('DELETE checkpoint')
+        route = self.get_route_or_abort(route_id)
+        checkpoint = self.get_or_abort(checkpoint_id)
+
+        db.session.delete(checkpoint)
         db.session.commit()
 
         return '', 204

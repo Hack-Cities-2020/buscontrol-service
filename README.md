@@ -4,6 +4,8 @@
 ## Repo: buscontrol-service
 Servicio para tareas de control de itinerarios y rutas de buses de transporte urbano.
 
+> Este repositorio es el servicio web correspondiente a la aplicación web [mobility-project-front](https://github.com/Hack-Cities-2020/mobility_project_front_2020)
+
 ## Funcionalidades
 Este servicio sirve como base para la aplicación web de monitoreo y administración de rutas y buses. 
 Contiene lógica para crear y  gestionar rutas georeferenciadas con sus correspondientes paradas y puntos de control.
@@ -84,8 +86,32 @@ con licencias privativas, de tal modo que se pueda usar, modificar y distribuir 
 
 Las tecnologías usadas se listan a continuación:
 
-- Lenguaje de programación: Python 3
-- Framework web: Flask
-- Paquetes base: Flask-restful, sqlalchemy
-- DB: Sqlite* (el ORM es agnóstico a la DB)
+- Lenguaje de programación: [Python 3](https://www.python.org/)
+- Framework web: [Flask](https://flask.palletsprojects.com/en/1.1.x/)
+- Paquetes base: [Flask-restful](https://flask-restful.readthedocs.io/en/latest/), [sqlalchemy](https://www.sqlalchemy.org/)
+- DB: [Sqlite*](https://www.sqlite.org/index.html) (el ORM es agnóstico a la DB)
 
+
+## Licencia: MIT
+
+MIT License
+
+Copyright (c) 2020 Hack-Fellas
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

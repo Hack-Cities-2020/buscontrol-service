@@ -26,3 +26,8 @@ CSRF_SESSION_KEY = "secret"
 
 # Secret key for signing cookies
 SECRET_KEY = "secret"
+
+## 
+STATIC_FOLDER = '/static'
+
+FILES_FOLDER = os.path.join(STATIC_FOLDER, 'files')

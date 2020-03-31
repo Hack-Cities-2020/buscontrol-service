@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -8,8 +9,15 @@ app = Flask(__name__)
 CORS(app)
 # Configurations
 app.config.from_object('config')
+app.static_url_path = app.config.get('STATIC_FOLDER')
+app.static_folder = app.root_path + app.static_url_path
 
 LOGGER = app.logger
+
+LOGGER.info(f'static folder: {app.static_folder}')
+
+app_files_folder = os.path.join(app.static_folder, 'files')
+
 # Define the database object which is imported
 # by modules and controllers
 db = SQLAlchemy(app)

@@ -1,8 +1,14 @@
+import os
+from datetime import datetime
+import csv
+import random
 import json
+from flask import send_from_directory, request
 from flask_restful import Resource, reqparse, marshal_with, abort
 import sqlalchemy.exc as sql_exception
 from app import db
 from app import LOGGER
+from app import app_files_folder
 from app.mod_api.models import *
 from app.mod_test.models import AnimalM
 
@@ -29,7 +35,6 @@ class Animal(Resource):
         db.session.add(animal)
         db.session.commit()
         return animal
-
 
 class Route(Resource):
     def __init__(self):
@@ -126,7 +131,6 @@ class Route(Resource):
         db.session.commit()
 
         return '', 204
-
 
 class Vehicle(Resource):
     def __init__(self):
@@ -342,8 +346,6 @@ class RouteStops(Resource):
 
         return '', 204
 
-
-
 class RouteCheckpoints(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
@@ -435,3 +437,56 @@ class RouteCheckpoints(Resource):
         db.session.commit()
 
         return '', 204
+
+class Reports(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('routes', type=list, location='json',help='Route ids required')
+        self.parser.add_argument('vehicles', type=list, location='json', help='Vehicle ids required')
+        self.parser.add_argument('period', type=str, location='json', help='periodo of the report')
+
+        self.files_folder = app_files_folder
+
+        LOGGER.info(f'Files folder: {self.files_folder}')
+
+    def generate_metrics(self, period, route, vehicle):
+        mu = 100
+        period_map = {'diario': 20, 'semanal': 25, 'mensual':15}
+        t_medio = round(random.gauss(mu, period_map[period]))
+        puntualidad = round(random.random() * 3.0 + 2.0, 2)
+        faltas = random.choice(range(10))
+
+        return t_medio, puntualidad, faltas
+
+    def generate_csv(self, params):
+        file_name = str(datetime.now().strftime('%Y%m%d_%H%M%S')) + '_report.csv'
+        file_path = os.path.join(self.files_folder, file_name)
+        data_columns = ['vehiculo', 'conductor', 'ci', 'ruta', 'tiempo_medio_ruta', 'puntualidad', 'faltas']
+        data_array = []
+
+        for r in params['routes']:
+            route = RouteM.query.get(r)
+            for v in params['vehicles']:
+                vehicle = VehicleM.query.get(v)
+                t, p, f = self.generate_metrics(params['period'], route, vehicle)
+
+                data_array.append([vehicle.plate, vehicle.driver.full_name, vehicle.driver.ci, route.name, t, p, f])
+
+        print(data_columns)
+        print(data_array)
+        with open(file_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow(data_columns)
+            writer.writerows(data_array)
+        print(file_path)
+        return file_name
+
+    def get(self):
+        'generate report as csv file and return url for file'
+        args = self.parser.parse_args()
+        print(f'host {request.host_url}')
+        print(args)
+
+        csv_file = self.generate_csv(args)
+        # send = send_from_directory('files', csv_file)
+        return {'success':'true', 'file':f'{request.host_url}static/files/{csv_file}'}

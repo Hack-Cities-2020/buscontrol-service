@@ -99,6 +99,10 @@ Las tecnologías usadas se listan a continuación:
 - Paquetes base: [Flask-restful](https://flask-restful.readthedocs.io/en/latest/), [sqlalchemy](https://www.sqlalchemy.org/)
 - DB: [Sqlite*](https://www.sqlite.org/index.html) (el ORM es agnóstico a la DB)
 
+## Créditos
+Contribuciones:
+- [Jose Laruta](https://github.com/tabris2015)
+- [Hernando Calle](https://github.com/Nandopolis)
 
 ## Licencia: MIT
 
